@@ -36,7 +36,7 @@ rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_global_path;
 rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_car;
 nav_msgs::msg::Path *global_path;
 double last_vio_t = -1;
-std::queue<sensor_msgs::msg::NavSatFix::SharedPtr> gpsQueue;
+std::queue<sensor_msgs::msg::NavSatFix::ConstPtr> gpsQueue;
 std::mutex m_buf;
 
 void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w_car)
@@ -81,7 +81,7 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     pub_car->publish(markerArray_msg);
 }
 
-void GPS_callback(const sensor_msgs::msg::NavSatFix::SharedPtr &GPS_msg)
+void GPS_callback(const sensor_msgs::msg::NavSatFix::ConstPtr &GPS_msg)
 {
     //printf("gps_callback! \n");
     m_buf.lock();

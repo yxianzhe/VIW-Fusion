@@ -303,7 +303,7 @@ int main(int argc, char **argv)
     auto sub_restart = n->create_subscription<std_msgs::msg::Bool>("/vins_restart", rclcpp::QoS(rclcpp::KeepLast(100)), restart_callback);
     auto sub_imu_switch = n->create_subscription<std_msgs::msg::Bool>("/vins_imu_switch", rclcpp::QoS(rclcpp::KeepLast(100)), imu_switch_callback);
     auto sub_cam_switch = n->create_subscription<std_msgs::msg::Bool>("/vins_cam_switch", rclcpp::QoS(rclcpp::KeepLast(100)), cam_switch_callback);
-    auto sub_groundtruth = n->create_subscription<nav_msgs::msg::Odometry>(GROUNDTRUTH_TOPIC, rclcpp::QoS(rclcpp::KeepLast(100)), groundtruth_callback);
+    auto sub_groundtruth = n->create_subscription<geometry_msgs::msg::PoseStamped>(GROUNDTRUTH_TOPIC, rclcpp::QoS(rclcpp::KeepLast(100)), groundtruth_callback);
     std::thread sync_thread{sync_process};
     rclcpp::spin(n);
     // 如果你的程序写了相关的消息订阅函数，那么程序在执行过程中，除了主程序以外，ROS还会自动在后台按照你规定的格式，接受订阅的消息，但是所接到的消息并不是

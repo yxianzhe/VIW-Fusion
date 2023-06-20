@@ -23,7 +23,7 @@
 #include <nav_msgs/msg/path.hpp>
 #include <sensor_msgs/msg/point_cloud.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <image_encodings.hpp>
+// #include <image_encodings.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <cv_bridge/cv_bridge.h>

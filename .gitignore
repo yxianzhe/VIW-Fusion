@@ -20,3 +20,4 @@ camera_models/build/
 global_fusion/build/
 loop_fusion/build/
 vins_estimator/build/
+output/
