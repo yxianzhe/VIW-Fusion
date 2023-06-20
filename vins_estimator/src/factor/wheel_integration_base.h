@@ -72,7 +72,7 @@ class WheelIntegrationBase
                              Eigen::Vector3d &result_delta_p, Eigen::Quaterniond &result_delta_q,
                              double &result_linearized_sx, double &result_linearized_sy, double &result_linearized_sw, bool update_jacobian)
     {
-        //ROS_INFO("midpoint integration");
+        //RCLCPP_INFO("midpoint integration");
 
         Eigen::Matrix3d sv = Eigen::Vector3d(linearized_sx, linearized_sy, 1).asDiagonal();
         Vector3d un_vel_0 = delta_q * sv * _vel_0;
@@ -192,7 +192,7 @@ class WheelIntegrationBase
         double dsy = sy - linearized_sy;
         double dsw = sw - linearized_sw;
         Eigen::Matrix3d sv = Eigen::Vector3d(sx, sy, 1).asDiagonal();
-//        ROS_INFO("dsx: %f, dsy: &f, dsw: %f", dsx, dsy, dsw);
+//        RCLCPP_INFO("dsx: %f, dsy: &f, dsw: %f", dsx, dsy, dsw);
         Eigen::Matrix3d Ri = Qi.toRotationMatrix();
         Eigen::Matrix3d Rj = Qj.toRotationMatrix();
         Eigen::Matrix3d rio = qio.toRotationMatrix();

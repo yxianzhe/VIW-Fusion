@@ -18,10 +18,13 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 #include <ceres/ceres.h>
-#include <nav_msgs/Odometry.h>
-#include <nav_msgs/Path.h>
+// #include <nav_msgs/Odometry.h>
+// #include <nav_msgs/Path.h>
+#include <nav_msgs/msg/odometry.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include "LocalCartesian.hpp"
 #include "tic_toc.h"
+#include <rclcpp/rclcpp.hpp>
 
 using namespace std;
 
@@ -33,7 +36,7 @@ public:
 	void inputGPS(double t, double latitude, double longitude, double altitude, double posAccuracy);
 	void inputOdom(double t, Eigen::Vector3d OdomP, Eigen::Quaterniond OdomQ);
 	void getGlobalOdom(Eigen::Vector3d &odomP, Eigen::Quaterniond &odomQ);
-	nav_msgs::Path global_path;
+	nav_msgs::msg::Path global_path;
 
 private:
 	void GPS2XYZ(double latitude, double longitude, double altitude, double* xyz);

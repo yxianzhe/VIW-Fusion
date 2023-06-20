@@ -81,17 +81,17 @@ CameraExtrinsicAdjustType CAM_EXT_ADJ_TYPE;
 WheelExtrinsicAdjustType WHEEL_EXT_ADJ_TYPE;
 
 template <typename T>
-T readParam(ros::NodeHandle &n, std::string name)
+T readParam(rclcpp::Node::SharedPtr &n, std::string name)
 {
     T ans;
-    if (n.getParam(name, ans))
+    if (n->get_parameter(name, ans))
     {
-        ROS_INFO_STREAM("Loaded " << name << ": " << ans);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("readParam"), "Loaded " << name << ": " << ans);
     }
     else
     {
-        ROS_ERROR_STREAM("Failed to load " << name);
-        n.shutdown();
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("readParam"), "Failed to load " << name);
+        rclcpp::shutdown();
     }
     return ans;
 }
@@ -100,8 +100,8 @@ void readParameters(std::string config_file)
 {
     FILE *fh = fopen(config_file.c_str(),"r");
     if(fh == NULL){
-        ROS_WARN("config_file dosen't exist; wrong config_file path");
-        ROS_BREAK();
+        RCLCPP_WARN(rclcpp::get_logger("readParam"), "config_file dosen't exist; wrong config_file path");
+        // ROS_BREAK();
         return;          
     }
     fclose(fh);
@@ -168,7 +168,7 @@ void readParameters(std::string config_file)
         SW = static_cast<double>(fsSettings["sw"]);
         ESTIMATE_EXTRINSIC_WHEEL = fsSettings["estimate_wheel_extrinsic"];
         if(ESTIMATE_EXTRINSIC_WHEEL == 2){
-            ROS_WARN("have no prior about wheel extrinsic param, calibrate extrinsic param");
+            RCLCPP_WARN(rclcpp::get_logger("readParam"), "have no prior about wheel extrinsic param, calibrate extrinsic param");
             RIO = Eigen::Matrix3d::Identity();
             TIO = Eigen::Vector3d::Zero();
             EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
@@ -176,11 +176,11 @@ void readParameters(std::string config_file)
         }else{
             if (ESTIMATE_EXTRINSIC_WHEEL == 1)
             {
-                ROS_WARN(" Optimize wheel extrinsic param around initial guess!");
+                RCLCPP_WARN(rclcpp::get_logger("readParam"), " Optimize wheel extrinsic param around initial guess!");
                 EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
             }
             if (ESTIMATE_EXTRINSIC_WHEEL == 0)
-                ROS_WARN(" fix extrinsic param ");
+                RCLCPP_WARN(rclcpp::get_logger("readParam"), " fix extrinsic param ");
 
             cv::Mat cv_T;
             fsSettings["body_T_wheel"] >> cv_T;
@@ -205,33 +205,33 @@ void readParameters(std::string config_file)
             switch(extrinsic_type){
                 case 0:
                     WHEEL_EXT_ADJ_TYPE = WheelExtrinsicAdjustType::ADJUST_WHEEL_ALL;
-                    ROS_INFO("adjust translation and rotation of cam extrinsic");
+                    RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust translation and rotation of cam extrinsic");
                     break;
                 case 1:
                     WHEEL_EXT_ADJ_TYPE = WheelExtrinsicAdjustType::ADJUST_WHEEL_TRANSLATION;
-                    ROS_INFO("adjust only translation of cam extrinsic");
+                    RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust only translation of cam extrinsic");
                     break;
                 case 2:
                     WHEEL_EXT_ADJ_TYPE = WheelExtrinsicAdjustType::ADJUST_WHEEL_ROTATION;
-                    ROS_INFO("adjust only rotation of cam extrinsic");
+                    RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust only rotation of cam extrinsic");
                     break;
                 case 3:
                     WHEEL_EXT_ADJ_TYPE = WheelExtrinsicAdjustType::ADJUST_WHEEL_NO_Z;
-                    ROS_INFO("adjust without Z of translation of wheel extrinsic");
+                    RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust without Z of translation of wheel extrinsic");
                     break;
                 case 4:
                     WHEEL_EXT_ADJ_TYPE = WheelExtrinsicAdjustType::ADJUST_WHEEL_NO_ROTATION_NO_Z;
-                    ROS_INFO("adjust without rotation and Z of translation of wheel extrinsic");
+                    RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust without rotation and Z of translation of wheel extrinsic");
                     break;
                 default:
-                    ROS_WARN("the extrinsic type range from 0 to 4");
+                    RCLCPP_WARN(rclcpp::get_logger("readParam"), "the extrinsic type range from 0 to 4");
             }
 
         }
 
         ESTIMATE_INTRINSIC_WHEEL = static_cast<int>(fsSettings["estimate_wheel_intrinsic"]);
         if(ESTIMATE_INTRINSIC_WHEEL == 2){
-            ROS_WARN("have no prior about wheel intrinsic param, calibrate intrinsic param");
+            RCLCPP_WARN(rclcpp::get_logger("readParam"), "have no prior about wheel intrinsic param, calibrate intrinsic param");
             IN_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/intrinsic_parameter.csv";
             INTRINSIC_ITERATE_PATH = OUTPUT_FOLDER + "/intrinsic_iterate.csv";
             std::ofstream fout(INTRINSIC_ITERATE_PATH, std::ios::out);
@@ -239,14 +239,14 @@ void readParameters(std::string config_file)
         }else{
             if (ESTIMATE_INTRINSIC_WHEEL == 1)
             {
-                ROS_WARN(" Optimize wheel intrinsic param around initial guess!");
+                RCLCPP_WARN(rclcpp::get_logger("readParam"), " Optimize wheel intrinsic param around initial guess!");
                 IN_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/intrinsic_parameter.csv";
                 INTRINSIC_ITERATE_PATH = OUTPUT_FOLDER + "/intrinsic_iterate.csv";
                 std::ofstream fout(INTRINSIC_ITERATE_PATH, std::ios::out);
                 fout.close();
             }
             if (ESTIMATE_INTRINSIC_WHEEL == 0)
-                ROS_WARN(" fix intrinsic param ");
+                RCLCPP_WARN(rclcpp::get_logger("readParam"), " fix intrinsic param ");
         }
 
     }
@@ -280,7 +280,7 @@ void readParameters(std::string config_file)
     ESTIMATE_EXTRINSIC = fsSettings["estimate_extrinsic"];
     if (ESTIMATE_EXTRINSIC == 2)
     {
-        ROS_WARN("have no prior about extrinsic param, calibrate extrinsic param");
+        RCLCPP_WARN(rclcpp::get_logger("readParam"), "have no prior about extrinsic param, calibrate extrinsic param");
         RIC.push_back(Eigen::Matrix3d::Identity());
         TIC.push_back(Eigen::Vector3d::Zero());
         EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
@@ -289,11 +289,11 @@ void readParameters(std::string config_file)
     {
         if ( ESTIMATE_EXTRINSIC == 1)
         {
-            ROS_WARN(" Optimize extrinsic param around initial guess!");
+            RCLCPP_WARN(rclcpp::get_logger("readParam"), " Optimize extrinsic param around initial guess!");
             EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
         }
         if (ESTIMATE_EXTRINSIC == 0)
-            ROS_WARN(" fix extrinsic param ");
+            RCLCPP_WARN(rclcpp::get_logger("readParam"), " fix extrinsic param ");
 
         cv::Mat cv_T;
         fsSettings["body_T_cam0"] >> cv_T;
@@ -314,26 +314,26 @@ void readParameters(std::string config_file)
         switch(extrinsic_type){
             case 0:
                 CAM_EXT_ADJ_TYPE = CameraExtrinsicAdjustType ::ADJUST_CAM_ALL;
-                ROS_INFO("adjust rotation and translation of cam extrinsic");
+                RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust rotation and translation of cam extrinsic");
                 break;
             case 1:
                 CAM_EXT_ADJ_TYPE = CameraExtrinsicAdjustType ::ADJUST_CAM_TRANSLATION;
-                ROS_INFO("adjust only translation of cam extrinsic");
+                RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust only translation of cam extrinsic");
                 break;
             case 2:
                 CAM_EXT_ADJ_TYPE = CameraExtrinsicAdjustType ::ADJUST_CAM_ROTATION;
-                ROS_INFO("adjust only rotation of cam extrinsic");
+                RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust only rotation of cam extrinsic");
                 break;
             case 3:
                 CAM_EXT_ADJ_TYPE = CameraExtrinsicAdjustType ::ADJUST_CAM_NO_Z;
-                ROS_INFO("adjust without Z of translation of cam extrinsic");
+                RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust without Z of translation of cam extrinsic");
                 break;
             case 4:
                 CAM_EXT_ADJ_TYPE = CameraExtrinsicAdjustType ::ADJUST_CAM_NO_ROTATION_NO_Z;
-                ROS_INFO("adjust without rotation and Z of translation of cam extrinsic");
+                RCLCPP_INFO(rclcpp::get_logger("readParam"), "adjust without rotation and Z of translation of cam extrinsic");
                 break;
             default:
-                ROS_WARN("the extrinsic type range from 0 to 4");
+                RCLCPP_WARN(rclcpp::get_logger("readParam"), "the extrinsic type range from 0 to 4");
         }
 
     }
@@ -392,28 +392,28 @@ void readParameters(std::string config_file)
     OFFSET_SIM = fsSettings["offset"];
     ESTIMATE_TD = fsSettings["estimate_td"];
     if (ESTIMATE_TD){
-        ROS_INFO_STREAM("Unsynchronized sensors, online estimate time offset, initial td: " << TD);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("readParam"), "Unsynchronized sensors, online estimate time offset, initial td: " << TD);
         TD_PATH = OUTPUT_FOLDER + "/td.csv";
         std::ofstream fout(PROCESS_TIME_PATH, std::ios::out);
         fout.close();
     }
     else
-        ROS_INFO_STREAM("Synchronized sensors, fix time offset: " << TD);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("readParam"), "Synchronized sensors, fix time offset: " << TD);
 
     TD_WHEEL = fsSettings["td_wheel"];
     ESTIMATE_TD_WHEEL = fsSettings["estimate_td_wheel"];
     if (ESTIMATE_TD_WHEEL){
-        ROS_INFO_STREAM("Unsynchronized sensors, online estimate time offset, initial td: " << TD_WHEEL);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("readParam"), "Unsynchronized sensors, online estimate time offset, initial td: " << TD_WHEEL);
         TD_WHEEL_PATH = OUTPUT_FOLDER + "/td_wheel.csv";
         std::ofstream fout(TD_WHEEL_PATH, std::ios::out);
         fout.close();
     }
     else
-        ROS_INFO_STREAM("Synchronized sensors, fix time offset: " << TD_WHEEL);
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("readParam"), "Synchronized sensors, fix time offset: " << TD_WHEEL);
 
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
-    ROS_INFO("ROW: %d COL: %d ", ROW, COL);
+    RCLCPP_INFO(rclcpp::get_logger("readParam"), "ROW: %d COL: %d ", ROW, COL);
 
     if(!USE_IMU)
     {

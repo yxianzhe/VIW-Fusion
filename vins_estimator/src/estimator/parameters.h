@@ -9,8 +9,10 @@
 
 #pragma once
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
+// #include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+// #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/msg/pose_stamped.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include "../utility/utility.h"

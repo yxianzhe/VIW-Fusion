@@ -7,18 +7,25 @@
 #include <map>
 #include <thread>
 #include <mutex>
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <sensor_msgs/PointCloud.h>
-#include <sensor_msgs/Imu.h>
-#include <geometry_msgs/TwistWithCovarianceStamped.h>
-#include <geometry_msgs/PoseStamped.h>
+// #include <ros/ros.h>
+// #include <rosbag/bag.h>
+// #include <sensor_msgs/PointCloud.h>
+// #include <sensor_msgs/Imu.h>
+// #include <geometry_msgs/TwistWithCovarianceStamped.h>
+// #include <geometry_msgs/PoseStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rosbag2_cpp/
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <iostream>
 #include <fstream>
 #include <Eigen/Core>
 #include <Eigen/Dense>
-#include <ros/package.h>
-#include <nav_msgs/Odometry.h>
+// #include <ros/package.h>
+// #include <nav_msgs/Odometry.h>
+#include <nav_msgs/msg/odometry.hpp>
 
 bool WriteImu(std::string& imu_file, std::string topic, rosbag::Bag& bag, double time_offset);
 void WriteFeature(std::string& base_file, std::string topic, rosbag::Bag& bag, double time_offset);

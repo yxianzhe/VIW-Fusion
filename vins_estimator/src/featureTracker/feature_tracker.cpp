@@ -164,7 +164,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackImg"), "temporal optical flow costs: %fms", t_o.toc());
         //printf("track cnt %d\n", (int)ids.size());
     }
 
@@ -174,12 +174,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     if (1)
     {
         //rejectWithF();
-        ROS_DEBUG("set mask begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackImg"), "set mask begins");
         TicToc t_m;
         setMask();
-        ROS_DEBUG("set mask costs %fms", t_m.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackImg"), "set mask costs %fms", t_m.toc());
 
-        ROS_DEBUG("detect feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackImg"), "detect feature begins");
         TicToc t_t;
         // 如果当前图像的特征点cur_pts数目小于规定的最大特征点数目MAX_CNT，则进行提取
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
@@ -193,7 +193,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         }
         else
             n_pts.clear();
-        ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackImg"), "detect feature costs: %f ms", t_t.toc());
         // 对于所有新提取出来的特征点，加入到cur_pts
         for (auto &p : n_pts)
         {
@@ -357,7 +357,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackFe
         vector<float> err;
         //特征点恒定且一一对应，直接赋值即可
         cur_pts = _features0;
-        ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackFeature"), "temporal optical flow costs: %fms", t_o.toc());
         //printf("track cnt %d\n", (int)ids.size());
     }
 
@@ -367,12 +367,12 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackFe
     if (1)
     {
         //rejectWithF();
-        ROS_DEBUG("set mask begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackFeature"), "set mask begins");
         TicToc t_m;
 //        setMask();
-//        ROS_DEBUG("set mask costs %fms", t_m.toc());
+//        RCLCPP_DEBUG("set mask costs %fms", t_m.toc());
 
-        ROS_DEBUG("detect feature begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackFeature"), "detect feature begins");
         TicToc t_t;
         // 如果当前图像的特征点cur_pts数目小于规定的最大特征点数目MAX_CNT，则进行提取
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());//特征恒定，只有在第一次才会发生
@@ -383,7 +383,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackFe
         }
         else
             n_pts.clear();
-        ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("TrackFeature"), "detect feature costs: %f ms", t_t.toc());
         // 对于所有新提取出来的特征点，加入到cur_pts
         for (auto &p : n_pts)
         {
@@ -524,7 +524,7 @@ void FeatureTracker::rejectWithF()
 {
     if (cur_pts.size() >= 8)
     {
-        ROS_DEBUG("FM ransac begins");
+        RCLCPP_DEBUG(rclcpp::get_logger("RejectWithF"), "FM ransac begins");
         TicToc t_f;
         vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
         for (unsigned int i = 0; i < cur_pts.size(); i++)
@@ -549,8 +549,8 @@ void FeatureTracker::rejectWithF()
         reduceVector(cur_un_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
-        ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+        RCLCPP_DEBUG(rclcpp::get_logger("RejectWithF"), "FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
+        RCLCPP_DEBUG(rclcpp::get_logger("RejectWithF"), "FM ransac costs: %fms", t_f.toc());
     }
 }
 
@@ -558,7 +558,7 @@ void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file)
 {
     for (size_t i = 0; i < calib_file.size(); i++)
     {
-        ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
+        RCLCPP_INFO(rclcpp::get_logger("ReadIntrinsic"), "reading paramerter of camera %s", calib_file[i].c_str());
         camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
         m_camera.push_back(camera);
     }
@@ -595,7 +595,7 @@ void FeatureTracker::showUndistortion(const string &name)
         }
         else
         {
-            //ROS_ERROR("(%f %f) -> (%f %f)", distortedp[i].y, distortedp[i].x, pp.at<float>(1, 0), pp.at<float>(0, 0));
+            //RCLCPP_ERROR("(%f %f) -> (%f %f)", distortedp[i].y, distortedp[i].x, pp.at<float>(1, 0), pp.at<float>(0, 0));
         }
     }
     // turn the following code on if you need
@@ -668,7 +668,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
         cv::hconcat(imLeft, imRight, imTrack);//左右目图像合并在一张图像中
     else
         imTrack = imLeft.clone();
-    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+    cv::cvtColor(imTrack, imTrack, cv::COLOR_GRAY2RGB);
 
     for (size_t j = 0; j < curLeftPts.size(); j++)
     {

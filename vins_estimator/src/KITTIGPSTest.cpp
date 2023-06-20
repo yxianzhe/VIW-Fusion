@@ -15,8 +15,10 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <ros/ros.h>
-#include <sensor_msgs/NavSatFix.h>
+// #include <ros/ros.h>
+// #include <sensor_msgs/NavSatFix.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include "estimator/estimator.h"
 #include "utility/visualization.h"
 
@@ -24,15 +26,15 @@ using namespace std;
 using namespace Eigen;
 
 Estimator estimator;
-ros::Publisher pubGPS;
+rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr pubGPS;
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "vins_estimator");
-	ros::NodeHandle n("~");
-	ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+	rclcpp::init(argc, argv);
+	auto n = rclcpp::Node::make_shared("vins_estimator");
+	// ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
-	pubGPS = n.advertise<sensor_msgs::NavSatFix>("/gps", 1000);
+	pubGPS = n->create_publisher<sensor_msgs::msg::NavSatFix>("/gps", 1000);
 
 	if(argc != 3)
 	{
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
 	file = std::fopen((dataPath + "image_00/timestamps.txt").c_str() , "r");
 	if(file == NULL){
 	    printf("cannot find file: %simage_00/timestamps.txt \n", dataPath.c_str());
-	    ROS_BREAK();
+	    // ROS_BREAK();
 	    return 0;          
 	}
 	vector<double> imageTimeList;
@@ -75,7 +77,7 @@ int main(int argc, char** argv)
 		file = std::fopen((dataPath + "oxts/timestamps.txt").c_str() , "r");
 		if(file == NULL){
 		    printf("cannot find file: %soxts/timestamps.txt \n", dataPath.c_str());
-		    ROS_BREAK();
+		    // ROS_BREAK();
 		    return 0;          
 		}
 		int year, month, day;
@@ -103,7 +105,7 @@ int main(int argc, char** argv)
 
 	for (size_t i = 0; i < imageTimeList.size(); i++)
 	{	
-		if(ros::ok())
+		if(rclcpp::ok())
 		{
 			if(imageTimeList[0] < GPSTimeList[0])
 				baseTime = imageTimeList[0];
@@ -119,8 +121,8 @@ int main(int argc, char** argv)
 			printf("%s\n", leftImagePath.c_str() );
 			printf("%s\n", rightImagePath.c_str() );
 
-			imLeft = cv::imread(leftImagePath, CV_LOAD_IMAGE_GRAYSCALE );
-			imRight = cv::imread(rightImagePath, CV_LOAD_IMAGE_GRAYSCALE );
+			imLeft = cv::imread(leftImagePath, cv::IMREAD_GRAYSCALE );
+			imRight = cv::imread(rightImagePath, cv::IMREAD_GRAYSCALE );
 
 			double imgTime = imageTimeList[i] - baseTime;
 
@@ -130,7 +132,7 @@ int main(int argc, char** argv)
 			GPSFile = std::fopen(GPSFilePath.c_str() , "r");
 			if(GPSFile == NULL){
 			    printf("cannot find file: %s\n", GPSFilePath.c_str());
-			    ROS_BREAK();
+			    // ROS_BREAK();
 			    return 0;          
 			}
 			double lat, lon, alt, roll, pitch, yaw;
@@ -155,9 +157,12 @@ int main(int argc, char** argv)
 
 			std::fclose(GPSFile);
 
-			sensor_msgs::NavSatFix gps_position;
+			sensor_msgs::msg::NavSatFix gps_position;
 			gps_position.header.frame_id = "NED";
-			gps_position.header.stamp = ros::Time(imgTime);
+			double t_sec = floor(imgTime);
+            double t_nsec = imgTime - t_sec;
+            t_nsec *= 1e9;
+			gps_position.header.stamp = rclcpp::Time(t_sec,t_nsec);
 			gps_position.status.status = navstat;
 			gps_position.status.service = numsats;
 			gps_position.latitude  = lat;
@@ -165,7 +170,7 @@ int main(int argc, char** argv)
 			gps_position.altitude  = alt;
 			gps_position.position_covariance[0] = pos_accuracy;
 			//printf("pos_accuracy %f \n", pos_accuracy);
-			pubGPS.publish(gps_position);
+			pubGPS->publish(gps_position);
 
 			estimator.inputImage(imgTime, imLeft, imRight);
 			

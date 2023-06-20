@@ -34,13 +34,14 @@ PoseGraph::~PoseGraph()
     t_optimization.detach();
 }
 
-void PoseGraph::registerPub(ros::NodeHandle &n)
+void PoseGraph::registerPub(rclcpp::Node::SharedPtr n)
 {
-    pub_pg_path = n.advertise<nav_msgs::Path>("pose_graph_path", 1000);
-    pub_base_path = n.advertise<nav_msgs::Path>("base_path", 1000);
-    pub_pose_graph = n.advertise<visualization_msgs::MarkerArray>("pose_graph", 1000);
+    string nh = "loop_fusion/";
+    pub_pg_path = n->create_publisher<nav_msgs::msg::Path>(nh + "pose_graph_path", 1000);
+    pub_base_path = n->create_publisher<nav_msgs::msg::Path>(nh + "base_path", 1000);
+    pub_pose_graph = n->create_publisher<visualization_msgs::msg::MarkerArray>(nh + "pose_graph", 1000);
     for (int i = 1; i < 10; i++)
-        pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 1000);
+        pub_path[i] = n->create_publisher<nav_msgs::msg::Path>(nh + "path_" + to_string(i), 1000);
 }
 
 void PoseGraph::setIMUFlag(bool _use_imu)
@@ -166,8 +167,11 @@ void PoseGraph::addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop)
     R = r_drift * R;
     cur_kf->updatePose(P, R);
     Quaterniond Q{R};
-    geometry_msgs::PoseStamped pose_stamped;
-    pose_stamped.header.stamp = ros::Time(cur_kf->time_stamp);
+    geometry_msgs::msg::PoseStamped pose_stamped;
+    double t_sec = floor(cur_kf->time_stamp);
+    double t_nsec = cur_kf->time_stamp - t_sec;
+    t_nsec *= 1e9;
+    pose_stamped.header.stamp = rclcpp::Time(t_sec,t_nsec);
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
@@ -283,8 +287,11 @@ void PoseGraph::loadKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop)
     Matrix3d R;
     cur_kf->getPose(P, R);
     Quaterniond Q{R};
-    geometry_msgs::PoseStamped pose_stamped;
-    pose_stamped.header.stamp = ros::Time(cur_kf->time_stamp);
+    geometry_msgs::msg::PoseStamped pose_stamped;
+    double t_sec = floor(cur_kf->time_stamp);
+    double t_nsec = cur_kf->time_stamp - t_sec;
+    t_nsec *= 1e9;
+    pose_stamped.header.stamp = rclcpp::Time(t_sec,t_nsec);
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
@@ -353,7 +360,7 @@ int PoseGraph::detectLoop(KeyFrame* keyframe, int frame_index)
     {
         int feature_num = keyframe->keypoints.size();
         cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
-        putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+        putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
         image_pool[frame_index] = compressed_image;
     }
     TicToc tmp_t;
@@ -374,7 +381,7 @@ int PoseGraph::detectLoop(KeyFrame* keyframe, int frame_index)
     {
         loop_result = compressed_image.clone();
         if (ret.size() > 0)
-            putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
+            putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
     }
     // visual loop result 
     if (DEBUG_IMAGE)
@@ -384,7 +391,7 @@ int PoseGraph::detectLoop(KeyFrame* keyframe, int frame_index)
             int tmp_index = ret[i].Id;
             auto it = image_pool.find(tmp_index);
             cv::Mat tmp_image = (it->second).clone();
-            putText(tmp_image, "index:  " + to_string(tmp_index) + "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
+            putText(tmp_image, "index:  " + to_string(tmp_index) + "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
             cv::hconcat(loop_result, tmp_image, loop_result);
         }
     }
@@ -401,7 +408,7 @@ int PoseGraph::detectLoop(KeyFrame* keyframe, int frame_index)
                 {
                     auto it = image_pool.find(tmp_index);
                     cv::Mat tmp_image = (it->second).clone();
-                    putText(tmp_image, "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+                    putText(tmp_image, "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
                     cv::hconcat(loop_result, tmp_image, loop_result);
                 }
             }
@@ -437,7 +444,7 @@ void PoseGraph::addKeyFrameIntoVoc(KeyFrame* keyframe)
     {
         int feature_num = keyframe->keypoints.size();
         cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
-        putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+        putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
         image_pool[keyframe->index] = compressed_image;
     }
 
@@ -818,8 +825,11 @@ void PoseGraph::updatePath()
         Q = R;
 //        printf("path p: %f, %f, %f\n",  P.x(),  P.z(),  P.y() );
 
-        geometry_msgs::PoseStamped pose_stamped;
-        pose_stamped.header.stamp = ros::Time((*it)->time_stamp);
+        geometry_msgs::msg::PoseStamped pose_stamped;
+        double t_sec = floor((*it)->time_stamp);
+        double t_nsec = (*it)->time_stamp - t_sec;
+        t_nsec *= 1e9;
+        pose_stamped.header.stamp = rclcpp::Time(t_sec,t_nsec);
         pose_stamped.header.frame_id = "world";
         pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
         pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
@@ -1102,11 +1112,11 @@ void PoseGraph::publish()
         //if (sequence_loop[i] == true || i == base_sequence)
         if (1 || i == base_sequence)
         {
-            pub_pg_path.publish(path[i]);
-            pub_path[i].publish(path[i]);
+            pub_pg_path->publish(path[i]);
+            pub_path[i]->publish(path[i]);
             posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
         }
     }
-    pub_base_path.publish(base_path);
+    pub_base_path->publish(base_path);
     //posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
 }

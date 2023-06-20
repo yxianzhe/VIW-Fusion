@@ -79,7 +79,7 @@ void ResidualBlockInfo::Evaluate()
 
 MarginalizationInfo::~MarginalizationInfo()
 {
-    //ROS_WARN("release marginlizationinfo");
+    //RCLCPP_WARN("release marginlizationinfo");
     
     for (auto it = parameter_block_data.begin(); it != parameter_block_data.end(); ++it)
         delete it->second;
@@ -201,7 +201,7 @@ void MarginalizationInfo::marginalize()
     }
 
     n = pos - m;
-    //ROS_INFO("marginalization, pos: %d, m: %d, n: %d, size: %d", pos, m, n, (int)parameter_block_idx.size());
+    //RCLCPP_INFO("marginalization, pos: %d, m: %d, n: %d, size: %d", pos, m, n, (int)parameter_block_idx.size());
     if(m == 0)
     {
         valid = false;
@@ -238,7 +238,7 @@ void MarginalizationInfo::marginalize()
             b.segment(idx_i, size_i) += jacobian_i.transpose() * it->residuals;
         }
     }
-    ROS_INFO("summing up costs %f ms", t_summing.toc());
+    RCLCPP_INFO("summing up costs %f ms", t_summing.toc());
     */
     //multi thread
 
@@ -263,8 +263,8 @@ void MarginalizationInfo::marginalize()
         int ret = pthread_create( &tids[i], NULL, ThreadsConstructA ,(void*)&(threadsstruct[i]));
         if (ret != 0)
         {
-            ROS_WARN("pthread_create error");
-            ROS_BREAK();
+            RCLCPP_WARN(rclcpp::get_logger("Marginlization"),"pthread_create error");
+            // ROS_BREAK();
         }
     }
     for( int i = NUM_THREADS - 1; i >= 0; i--)  
@@ -273,8 +273,8 @@ void MarginalizationInfo::marginalize()
         A += threadsstruct[i].A;
         b += threadsstruct[i].b;
     }
-    //ROS_DEBUG("thread summing up costs %f ms", t_thread_summing.toc());
-    //ROS_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
+    //RCLCPP_DEBUG("thread summing up costs %f ms", t_thread_summing.toc());
+    //RCLCPP_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
 
 
     //TODO
