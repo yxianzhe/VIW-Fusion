@@ -26,6 +26,8 @@ rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_extrinsic;
 
 rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_track;
 
+std::shared_ptr<tf2_ros::TransformBroadcaster> br;
+
 CameraPoseVisualization cameraposevisual(1, 0, 0, 1);
 static double sum_of_path = 0;
 static Vector3d last_path(0.0, 0.0, 0.0);
@@ -51,6 +53,8 @@ void registerPub(rclcpp::Node::SharedPtr &n)
     pub_keyframe_point = n->create_publisher<sensor_msgs::msg::PointCloud>(nh + "keyframe_point", 1000);
     pub_extrinsic = n->create_publisher<nav_msgs::msg::Odometry>(nh + "extrinsic", 1000);
     pub_image_track = n->create_publisher<sensor_msgs::msg::Image>(nh + "image_track", 1000);
+
+    br = std::make_shared<tf2_ros::TransformBroadcaster>(n);
 
     cameraposevisual.setScale(0.1);
     cameraposevisual.setLineWidth(0.01);
@@ -316,7 +320,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::msg::Header &header
               << pose_stamped.pose.orientation.z << " "
               << pose_stamped.pose.orientation.w << std::endl;
         auto tmp_T = pose_stamped.pose.position;
-        printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
+        printf(" %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
                tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
 
     }
@@ -405,8 +409,8 @@ void pubGroundTruth(Estimator &estimator, const std_msgs::msg::Header &header, E
 
         auto tmp_T = pose_stamped.pose.position;
         auto tmp_Q = pose_stamped.pose.orientation;
-        printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
-               tmp_Q.w, tmp_Q.x, tmp_Q.y, tmp_Q.z);
+        // printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
+        //        tmp_Q.w, tmp_Q.x, tmp_Q.y, tmp_Q.z);
 
     }
 }
@@ -525,7 +529,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::msg::Header &head
         p.z = w_pts_i(2);
         point_cloud.points.push_back(p);
     }
-    RCLCPP_INFO(rclcpp::get_logger("PubPointCloud"), "good point size: %d", point_cloud.points.size());
+    // RCLCPP_INFO(rclcpp::get_logger("PubPointCloud"), "good point size: %d", point_cloud.points.size());
     pub_point_cloud->publish(point_cloud);
 
 
@@ -557,6 +561,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::msg::Header &head
         }
     }
     pub_margin_cloud->publish(margin_cloud);
+    // RCLCPP_INFO(rclcpp::get_logger("PubPointCloud"), "finish pubpointcloud");
 }
 
 
@@ -564,7 +569,6 @@ void pubTF(const Estimator &estimator, const std_msgs::msg::Header &header)
 {
     if( estimator.solver_flag != Estimator::SolverFlag::NON_LINEAR)
         return;
-    std::shared_ptr<tf2_ros::TransformBroadcaster> br;
     geometry_msgs::msg::TransformStamped transform;
     tf2::Quaternion q;
     // body frame

@@ -706,7 +706,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     }
 
     RCLCPP_DEBUG(rclcpp::get_logger("ProcessImg"), "%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
-    RCLCPP_INFO(rclcpp::get_logger("ProcessImg"), "%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
+    // RCLCPP_INFO(rclcpp::get_logger("ProcessImg"), "%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
     RCLCPP_DEBUG(rclcpp::get_logger("ProcessImg"), "Solving %d", frame_count);
     RCLCPP_DEBUG(rclcpp::get_logger("ProcessImg"), "number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
@@ -720,7 +720,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 
     if(ESTIMATE_EXTRINSIC == 2)
     {
-        RCLCPP_INFO(rclcpp::get_logger("ProcessImg"), "calibrating extrinsic param, rotation movement is needed");
+        // RCLCPP_INFO(rclcpp::get_logger("ProcessImg"), "calibrating extrinsic param, rotation movement is needed");
         if (frame_count != 0)
         {
             //获取frame_count - 1 与 frame_count两个图像帧匹配的特征点，特征点在归一化相机坐标系
@@ -728,8 +728,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             Matrix3d calib_ric;
             if (initial_ex_rotation.CalibrationExRotation(corres, pre_integrations[frame_count]->delta_q, calib_ric))
             {
-                RCLCPP_WARN(rclcpp::get_logger("ProcessImg"), "initial extrinsic rotation calib success");
-                RCLCPP_WARN_STREAM(rclcpp::get_logger("ProcessImg"), "initial extrinsic rotation: " << endl << calib_ric);
+                // RCLCPP_WARN(rclcpp::get_logger("ProcessImg"), "initial extrinsic rotation calib success");
+                // RCLCPP_WARN_STREAM(rclcpp::get_logger("ProcessImg"), "initial extrinsic rotation: " << endl << calib_ric);
                 ric[0] = calib_ric;
                 RIC[0] = calib_ric;
                 ESTIMATE_EXTRINSIC = 1;

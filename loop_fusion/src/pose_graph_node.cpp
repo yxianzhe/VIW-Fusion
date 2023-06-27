@@ -298,9 +298,9 @@ void process()
 
         if (pose_msg != NULL)
         {
-            //printf(" pose time %f \n", pose_msg->header.stamp.toSec());
-            //printf(" point time %f \n", point_msg->header.stamp.toSec());
-            //printf(" image time %f \n", image_msg->header.stamp.toSec());
+            printf(" pose time %f \n", pose_msg->header.stamp.sec + pose_msg->header.stamp.nanosec * 1e-9);
+            printf(" point time %f \n", point_msg->header.stamp.sec + point_msg->header.stamp.nanosec * 1e-9);
+            printf(" image time %f \n", image_msg->header.stamp.sec + image_msg->header.stamp.nanosec * 1e-9);
             // skip fisrt few
             if (skip_first_cnt < SKIP_FIRST_CNT)
             {

@@ -6,6 +6,9 @@ add_compile_options(-Wextra -Wpedantic)
 
 set(CMAKE_BUILD_TYPE Release)
 
+# use gdb to debug
+# find_package(backward_ros REQUIRED)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
