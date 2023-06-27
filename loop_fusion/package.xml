@@ -53,7 +53,8 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-
+  <!-- Use gdb to debug -->
+  <!-- <depend>backward_ros</depend> -->
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

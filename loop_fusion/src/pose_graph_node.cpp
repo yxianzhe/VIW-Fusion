@@ -263,32 +263,37 @@ void process()
         m_buf.lock();
         if(!image_buf.empty() && !point_buf.empty() && !pose_buf.empty())
         {
-            double imagestamp = image_buf.front()->header.stamp.sec + image_buf.front()->header.stamp.nanosec * (1e-9);
-            double posestamp = pose_buf.front()->header.stamp.sec + pose_buf.front()->header.stamp.nanosec * (1e-9);
-            double pointstamp = point_buf.front()->header.stamp.sec + point_buf.front()->header.stamp.nanosec * (1e-9);
-            if (imagestamp > posestamp)
+            if (image_buf.front()->header.stamp.sec + image_buf.front()->header.stamp.nanosec * (1e-9) 
+                    > pose_buf.front()->header.stamp.sec + pose_buf.front()->header.stamp.nanosec * (1e-9))
             {
+                // cout << "image time: " << image_buf.front()->header.stamp.sec + image_buf.front()->header.stamp.nanosec * (1e-9) << endl
+                // << "pose time: " << pose_buf.front()->header.stamp.sec + pose_buf.front()->header.stamp.nanosec * (1e-9) << endl;
                 pose_buf.pop();
                 printf("throw pose at beginning\n");
             }
-            else if (imagestamp > pointstamp)
+            else if (image_buf.front()->header.stamp.sec + image_buf.front()->header.stamp.nanosec * (1e-9) 
+                    > point_buf.front()->header.stamp.sec + point_buf.front()->header.stamp.nanosec * (1e-9))
             {
                 point_buf.pop();
                 printf("throw point at beginning\n");
             }
-            else if (imagestamp >= posestamp 
-                && pointstamp >= posestamp)
+            else if (image_buf.back()->header.stamp.sec + image_buf.back()->header.stamp.nanosec * (1e-9) 
+                        >= pose_buf.front()->header.stamp.sec + pose_buf.front()->header.stamp.nanosec * (1e-9)
+                && point_buf.back()->header.stamp.sec + point_buf.back()->header.stamp.nanosec * (1e-9) 
+                        >= pose_buf.front()->header.stamp.sec + pose_buf.front()->header.stamp.nanosec * (1e-9))
             {
                 pose_msg = pose_buf.front();
                 pose_buf.pop();
                 while (!pose_buf.empty())
                     pose_buf.pop();
-                while (imagestamp < posestamp)
+                while (image_buf.front()->header.stamp.sec + image_buf.front()->header.stamp.nanosec * (1e-9) 
+                        < pose_msg->header.stamp.sec + pose_msg->header.stamp.nanosec * (1e-9))
                     image_buf.pop();
                 image_msg = image_buf.front();
                 image_buf.pop();
 
-                while (pointstamp < posestamp)
+                while (point_buf.front()->header.stamp.sec + point_buf.front()->header.stamp.nanosec * (1e-9) 
+                        < pose_msg->header.stamp.sec + pose_msg->header.stamp.nanosec * (1e-9))
                     point_buf.pop();
                 point_msg = point_buf.front();
                 point_buf.pop();
@@ -298,9 +303,9 @@ void process()
 
         if (pose_msg != NULL)
         {
-            printf(" pose time %f \n", pose_msg->header.stamp.sec + pose_msg->header.stamp.nanosec * 1e-9);
-            printf(" point time %f \n", point_msg->header.stamp.sec + point_msg->header.stamp.nanosec * 1e-9);
-            printf(" image time %f \n", image_msg->header.stamp.sec + image_msg->header.stamp.nanosec * 1e-9);
+            // printf(" pose time %f \n", pose_msg->header.stamp.sec + pose_msg->header.stamp.nanosec * 1e-9);
+            // printf(" point time %f \n", point_msg->header.stamp.sec + point_msg->header.stamp.nanosec * 1e-9);
+            // printf(" image time %f \n", image_msg->header.stamp.sec + image_msg->header.stamp.nanosec * 1e-9);
             // skip fisrt few
             if (skip_first_cnt < SKIP_FIRST_CNT)
             {

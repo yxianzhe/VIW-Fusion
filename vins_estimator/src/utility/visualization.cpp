@@ -309,8 +309,8 @@ void pubOdometry(const Estimator &estimator, const std_msgs::msg::Header &header
         // write result to file
         ofstream foutC(VINS_RESULT_PATH, ios::app);
         foutC.setf(ios::fixed, ios::floatfield);
-        foutC << std::setprecision(0)
-              << header.stamp.sec * (1e9) + header.stamp.nanosec << " "
+        foutC << std::setprecision(9)
+              << header.stamp.sec + header.stamp.nanosec * 1e-9 << " "
               << std::setprecision(9)
               << pose_stamped.pose.position.x << " "
               << pose_stamped.pose.position.y << " "
@@ -320,8 +320,8 @@ void pubOdometry(const Estimator &estimator, const std_msgs::msg::Header &header
               << pose_stamped.pose.orientation.z << " "
               << pose_stamped.pose.orientation.w << std::endl;
         auto tmp_T = pose_stamped.pose.position;
-        printf(" %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
-               tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
+        // printf(" %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.sec + header.stamp.nanosec * (1e-9), tmp_T.x, tmp_T.y, tmp_T.z,
+        //        tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
 
     }
 }
@@ -377,8 +377,8 @@ void pubGroundTruth(Estimator &estimator, const std_msgs::msg::Header &header, E
         // write result to file
         ofstream foutC(GROUNDTRUTH_PATH, ios::app);
         foutC.setf(ios::fixed, ios::floatfield);
-        foutC << std::setprecision(0)
-        << header.stamp.sec * (1e9) + header.stamp.nanosec<< " "
+        foutC << std::setprecision(9)
+        << header.stamp.sec + header.stamp.nanosec * 1e-9 << " "
         << std::setprecision(9)
         << pose_stamped.pose.position.x << " "
         << pose_stamped.pose.position.y << " "

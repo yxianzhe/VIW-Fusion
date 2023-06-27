@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 14)
 add_compile_options( -Wextra -Wpedantic) # -Wall : print warning
 set(CMAKE_BUILD_TYPE Release)
 
+# use gdb to debug
+# find_package(backward_ros REQUIRED)
+
 find_package(OpenCV)
 
 find_package(ament_cmake REQUIRED)
