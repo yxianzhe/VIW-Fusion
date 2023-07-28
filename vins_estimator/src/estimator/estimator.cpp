@@ -268,7 +268,8 @@ void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv
     if (SHOW_TRACK)
     {
         cv::Mat imgTrack = featureTracker.getTrackImage();
-        pubTrackImage(imgTrack, t);
+        pubTrackImageWithBoundingBox(imgTrack, _boxes, t);
+        // pubTrackImage(imgTrack, t);
     }
     
     if(MULTIPLE_THREAD)

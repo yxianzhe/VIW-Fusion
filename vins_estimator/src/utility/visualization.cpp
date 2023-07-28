@@ -119,6 +119,20 @@ void pubTrackImage(const cv::Mat &imgTrack, const double t)
     pub_image_track.publish(imgTrackMsg);
 }
 
+void pubTrackImageWithBoundingBox(const cv::Mat &imgTrack,  const vector<vector<int>> &boxes, const double t)
+{
+    std_msgs::Header header;
+    header.frame_id = "world";
+    header.stamp = ros::Time(t);
+    cv::Mat imgTrackWithBox = imgTrack;
+    for(auto &box:boxes)
+    {
+        cv::Rect rect(box[0], box[1], box[2]-box[0], box[3]-box[1]);
+        cv::rectangle(imgTrackWithBox, rect, cv::Scalar(255, 0, 0), 2 , cv::LINE_8, 0);
+    }
+    sensor_msgs::ImagePtr imgTrackMsg = cv_bridge::CvImage(header, "bgr8", imgTrackWithBox).toImageMsg();
+    pub_image_track.publish(imgTrackMsg);
+}
 
 void printStatistics(const Estimator &estimator, double t)
 {

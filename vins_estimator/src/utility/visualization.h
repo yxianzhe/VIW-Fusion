@@ -51,6 +51,8 @@ void pubPureWheelLatestOdometry(const Eigen::Vector3d &P, const Eigen::Quaternio
 
 void pubTrackImage(const cv::Mat &imgTrack, const double t);
 
+void pubTrackImageWithBoundingBox(const cv::Mat &imgTrack,  const vector<vector<int>> &boxes, const double t);
+
 void printStatistics(const Estimator &estimator, double t);
 
 void pubOdometry(const Estimator &estimator, const std_msgs::Header &header);
