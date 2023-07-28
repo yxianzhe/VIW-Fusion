@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     std_msgs
+    darknet_ros_msgs
     geometry_msgs
     nav_msgs
     tf
@@ -42,6 +43,7 @@ catkin_package(
   LIBRARIES vins_lib
   CATKIN_DEPENDS roscpp
     std_msgs
+    darknet_ros_msgs
     geometry_msgs
     nav_msgs
     tf
@@ -73,6 +75,9 @@ add_library(vins_lib
         src/featureTracker/feature_tracker.cpp)
 target_link_libraries(vins_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
+add_dependencies(vins_lib
+  darknet_ros_msgs_generate_messages_cpp
+)
 
 add_executable(vins_node src/rosNodeTest.cpp)
 target_link_libraries(vins_node vins_lib)

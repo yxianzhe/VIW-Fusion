@@ -19,6 +19,7 @@ ros::Publisher pub_point_cloud, pub_margin_cloud;
 ros::Publisher pub_key_poses;
 ros::Publisher pub_camera_pose;
 ros::Publisher pub_camera_pose_visual;
+ros::Publisher pub_start_detection;
 nav_msgs::Path path;
 nav_msgs::Path groundtruth_path;
 
@@ -52,6 +53,7 @@ void registerPub(ros::NodeHandle &n)
     pub_keyframe_point = n.advertise<sensor_msgs::PointCloud>("keyframe_point", 1000);
     pub_extrinsic = n.advertise<nav_msgs::Odometry>("extrinsic", 1000);
     pub_image_track = n.advertise<sensor_msgs::Image>("image_track", 1000);
+    pub_start_detection = n.advertise<std_msgs::Bool>("start_detection", 1000);
 
     cameraposevisual.setScale(0.1);
     cameraposevisual.setLineWidth(0.01);
@@ -687,4 +689,9 @@ void pubKeyframe(const Estimator &estimator)
         }
         pub_keyframe_point.publish(point_cloud);
     }
+}
+
+void pubStartDetection(const std_msgs::Bool &start_detection)
+{
+    pub_start_detection.publish(start_detection);
 }

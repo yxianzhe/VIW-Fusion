@@ -1,0 +1,140 @@
+%YAML:1.0
+
+#common parameters
+#support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
+imu: 1
+wheel: 1
+only_initial_with_wheel: 0 #只利用wheel进行初始化，不加入因子图
+plane: 1
+num_of_cam: 1
+
+imu_topic: "/d400/imu0"
+wheel_topic: "/odom"   #"/ridgeback_velocity_controller/odom"， “/odometry/filtered”
+image0_topic: "/d400/color/image_raw"
+image1_topic: "/d400/color/image_raw"
+output_path: "/home/yxz/slam/VIW-docker/VIW-Fusion-ws/src/VIW-Fusion/output"
+
+cam0_calib: "d400_cam.yaml"
+cam1_calib: "d400_cam.yaml"
+image_width: 848
+image_height: 480
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+# 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+# 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
+#If you choose 0 or 1, you should write down the following matrix.
+
+extrinsic_type: 3 # 0 ALL
+                  # 1 Only translation
+                  # 2 Only Rotation
+                  # 3 no z
+                  # 4 no rotation and no z
+
+body_T_cam0: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+#   data: [ 0.999975572679493,  0.003849141066713, 0.005854714944742,  0.0203127935529,
+#           -0.003828680351062, 0.999986658473099, -0.003501944262433, -0.00510325236246,
+#           -0.005868115609379, 0.003479442469180, 0.999976848846595,  -0.0112013882026,
+#           0,                  0,                 0,                  1 ]
+   data: [  0.99997533, -0.00382868, -0.00586811, -0.02039756,   
+            0.00384914,  0.99998642,  0.00347944,  0.00506397,   
+            0.00585471, -0.00350194,  0.99997661,  0.01106433,   
+            0.00000000,  0.00000000,  0.00000000,  1.00000000 ]
+
+body_T_cam1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [  0.99997533, -0.00382868, -0.00586811, -0.02039756,   
+            0.00384914,  0.99998642,  0.00347944,  0.00506397,   
+            0.00585471, -0.00350194,  0.99997661,  0.01106433,   
+            0.00000000,  0.00000000,  0.00000000,  1.00000000 ]
+
+# Extrinsic parameter between IMU and Wheel.
+estimate_wheel_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+# 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+# 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
+#If you choose 0 or 1, you should write down the following matrix.
+
+extrinsic_type_wheel: 3 # 0 ALL
+  # 1 Only translation
+  # 2 Only Rotation
+  # 3 no z
+# 4 no rotation and no z
+
+#wheel to body
+body_T_wheel: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+#  data: [ 0.0071560,  0.0130447,  0.9998893, 0.21545245195759705,
+#         -0.9998569,  0.0154227,  0.0069546, -0.07164430142403165, 
+#         -0.0153303, -0.9997960,  0.0131532, 0.9206998887739904,
+#          0,          0,          0,         1]
+  data: [ 0.00715604, -0.99985685, -0.01533027, -0.05906125,   
+          0.01304470,  0.01542273, -0.99979593,  0.91880644,   
+          0.99988931,  0.00695456,  0.01315320, -0.22704050,   
+          0.00000000,  0.00000000,  0.00000000,  1.00000000 ] 
+
+#plane noise
+#mono:0.01 stereo:0.005
+roll_n: 0.01
+#mono:0.01  stereo:0.005
+pitch_n: 0.01
+#mono:0.05 stereo:0.025
+zpw_n: 0.05
+
+#Multiple thread support
+multiple_thread: 1
+
+#feature traker paprameters
+max_cnt: 150            # max feature number in feature tracking
+min_dist: 30            # min distance between two features 
+freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image 
+F_threshold: 1.0        # ransac threshold (pixel)
+show_track: 1           # publish tracking image as topic
+flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
+max_num_iterations: 8   # max solver itrations, to guarantee real time
+keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
+
+#imu parameters       The more accurate parameters you provide, the better performance
+acc_n: 0.1         # accelerometer measurement noise standard deviation. #0.2   0.04
+gyr_n: 0.05        # gyroscope measurement noise standard deviation.     #0.05  0.004
+acc_w: 7.1765713730075628e-04         # accelerometer bias random work noise standard deviation.  #0.002
+gyr_w: 4.0e-05       # gyroscope bias random work noise standard deviation.     #4.0e-5
+g_norm: 9.805         # gravity magnitude
+
+#wheel parameters
+# rad/s mono:0.004 stereo:0.002
+wheel_gyro_noise_sigma: 0.004
+#　m/s mono:0.01  stereo:0.006
+wheel_velocity_noise_sigma: 0.01
+
+estimate_wheel_intrinsic: 0
+# 0  Have an accurate intrinsic parameters. We will trust the following sx, sy, sw, don't change it.
+# 1  Have an initial guess about intrinsic parameters. We will optimize around your initial guess.
+# 2  TODO Don't know anything about intrinsic parameters. You don't need to give sx, sy, sw. We will try to calibrate it. Do some rotation movement at beginning.
+#If you choose 0 or 1, you should write down the following sx, sy, sw.
+# wheel intrinsic
+sx: 1.0
+sy: 1.0
+sw: 1.0
+
+
+#unsynchronization parameters
+estimate_td: 0                      # online estimate time offset between camera and imu
+td: 0.00                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+#unsynchronization parameters
+estimate_td_wheel: 0                      # online estimate time offset between camera and wheel
+td_wheel: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+
+#loop closure parameters
+load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
+pose_graph_save_path: "/home/yxz/slam/VIW-docker/VIW-Fusion-ws/src/VIW-Fusion/output/pose_graph" # save and load path
+save_image: 0                   # save image in pose graph for visualization prupose; you can close this function by setting 0 

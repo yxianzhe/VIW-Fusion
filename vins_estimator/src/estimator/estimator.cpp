@@ -248,6 +248,49 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     }
     
 }
+
+void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv::Mat &_img, const cv::Mat &_img1)
+{
+    if(!_boxes.empty())
+        ROS_WARN("traking image with detection result at time %lf", t);
+    else
+        ROS_WARN("traking image without detection result at time %lf", t);
+    inputImageCnt++;
+    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
+    TicToc featureTrackerTime;
+
+    if(_img1.empty())
+        featureFrame = featureTracker.trackImage(t, _img);
+    else
+        featureFrame = featureTracker.trackImage(t, _img, _img1);
+    //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+
+    if (SHOW_TRACK)
+    {
+        cv::Mat imgTrack = featureTracker.getTrackImage();
+        pubTrackImage(imgTrack, t);
+    }
+    
+    if(MULTIPLE_THREAD)
+    {     
+        if(inputImageCnt % 2 == 0)
+        {
+            mBuf.lock();
+            featureBuf.push(make_pair(t, featureFrame));
+            mBuf.unlock();
+        }
+    }
+    else
+    {
+        mBuf.lock();
+        featureBuf.push(make_pair(t, featureFrame));
+        mBuf.unlock();
+        TicToc processTime;
+        processMeasurements();
+        printf("process time: %f\n", processTime.toc());
+    }
+}
+
 void Estimator::inputFeature(double t, const vector<cv::Point2f>& _features0, const vector<cv::Point2f>& _features1)
 {
     inputImageCnt++;
@@ -822,6 +865,11 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(solver_flag == NON_LINEAR && USE_PLANE)
             initPlane();
 
+        if(solver_flag == NON_LINEAR){
+            std_msgs::Bool start_detection;
+            start_detection.data = true;
+            pubStartDetection(start_detection);
+        }
 
     }
     else//初始化成功，优化环节
@@ -880,7 +928,7 @@ void Estimator::initPlane(){
     double zpws = 0.0;
     std::vector<Eigen::Quaterniond> qpws;
     for (int i = 0; i < frame_count; ++i) {
-        Eigen::Matrix3d rpw_temp = (Rs[i] * rio).transpose();
+        Eigen::Matrix3d rpw_temp = (Rs[i] * rio).transpose(); // (T_w_imu * T_imu_odom)^T
         qpws.emplace_back(Eigen::Quaterniond(rpw_temp));
         zpws += -(rpw_temp * (Ps[i] + Rs[i] * tio))[2];
     }

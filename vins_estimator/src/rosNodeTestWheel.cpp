@@ -20,6 +20,7 @@
 #include "estimator/estimator.h"
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
+#include "darknet_ros_msgs/BoundingBoxes.h"
 
 Estimator estimator;
 
@@ -27,6 +28,7 @@ queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
+queue<darknet_ros_msgs::BoundingBoxesConstPtr> box_buf;
 std::mutex m_buf;
 
 
@@ -43,6 +45,23 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
     img1_buf.push(img_msg);
     m_buf.unlock();
 }
+
+void bounding_box_callback(const darknet_ros_msgs::BoundingBoxesConstPtr &bounding_boxes_msg)
+{
+    static ros::Time last_timestamp = ros::Time::now();
+    if(bounding_boxes_msg->image_header.stamp == last_timestamp)
+        return;
+    // int box_num = bounding_boxes_msg->bounding_boxes.size();
+    // if(box_num)
+    //     ROS_WARN_STREAM("getting box at timestamp " << bounding_boxes_msg->image_header.stamp);
+    // else
+    //     ROS_WARN_STREAM("empty boxes at timestamp " << bounding_boxes_msg->image_header.stamp);
+    m_buf.lock();
+    box_buf.push(bounding_boxes_msg);
+    m_buf.unlock();
+    last_timestamp = bounding_boxes_msg->image_header.stamp;
+}
+
 void wheel_callback(const nav_msgs::OdometryConstPtr &odom_msg)
 {
     double t = odom_msg->header.stamp.toSec();
@@ -78,6 +97,27 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 
     cv::Mat img = ptr->image.clone();
     return img;
+}
+
+vector<vector<int>> getBoxesFromMsg(const darknet_ros_msgs::BoundingBoxesConstPtr &bounding_boxes_msg)
+{
+    int num_boxes = bounding_boxes_msg->bounding_boxes.size();
+    if(num_boxes)
+        ROS_WARN_STREAM("getting box at timestamp " << bounding_boxes_msg->image_header.stamp);
+    else
+        ROS_WARN_STREAM("empty boxes at timestamp " << bounding_boxes_msg->image_header.stamp);
+    if(num_boxes == 0)
+        return vector<vector<int>>();
+    vector<vector<int>> boxes(num_boxes, vector<int>(4));
+    for(int i=0; i<num_boxes; i++)
+    {
+        darknet_ros_msgs::BoundingBox cur_box = bounding_boxes_msg->bounding_boxes[i];
+        boxes[i][0] = cur_box.xmin;
+        boxes[i][1] = cur_box.ymin;
+        boxes[i][2] = cur_box.xmax;
+        boxes[i][3] = cur_box.ymax;
+    }
+    return boxes;
 }
 
 // extract images with same timestamp from two topics
@@ -135,8 +175,37 @@ void sync_process()
                 img0_buf.pop();
             }
             m_buf.unlock();
+            vector<vector<int>> bounding_boxes;
+            double boxes_time = 0.;
+            while(1)
+            {
+                m_buf.lock();
+                if(img0_buf.size()>3){
+                    m_buf.unlock();
+                    break;
+                }
+                if(!box_buf.empty())
+                {
+                    boxes_time = box_buf.front()->image_header.stamp.toSec();
+                    if(boxes_time - time > -0.003 && boxes_time - time < 0.003){
+                        bounding_boxes = getBoxesFromMsg(box_buf.front());
+                        box_buf.pop();
+                        m_buf.unlock();
+                        break;
+                    }else if(boxes_time < time){
+                        while(!box_buf.empty() && box_buf.front()->image_header.stamp.toSec() < time)
+                            box_buf.pop();
+                        m_buf.unlock();
+                        break;
+                    }else{
+                        m_buf.unlock();
+                        break;
+                    }
+                }
+                m_buf.unlock();
+            }
             if(!image.empty())
-                estimator.inputImage(time, image);
+                estimator.inputImage(time, bounding_boxes, image);
         }
 
         std::chrono::milliseconds dura(2);
@@ -267,6 +336,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
     ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
+    ros::Subscriber sub_yolo_result = n.subscribe("/darknet_ros/bounding_boxes", 100, bounding_box_callback);
     ros::Subscriber sub_restart = n.subscribe("/vins_restart", 100, restart_callback);
     ros::Subscriber sub_imu_switch = n.subscribe("/vins_imu_switch", 100, imu_switch_callback);
     ros::Subscriber sub_cam_switch = n.subscribe("/vins_cam_switch", 100, cam_switch_callback);

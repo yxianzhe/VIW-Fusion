@@ -38,6 +38,7 @@
 #include "../factor/projectionTwoFrameTwoCamFactor.h"
 #include "../factor/projectionOneFrameTwoCamFactor.h"
 #include "../featureTracker/feature_tracker.h"
+#include "darknet_ros_msgs/BoundingBoxes.h"
 
 
 class Estimator
@@ -53,6 +54,7 @@ class Estimator
     void inputWheel(double t, const Vector3d &linearVelocity, const Vector3d &angularVelocity);
     void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
     void inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    void inputImage(double t, const vector<vector<int>> &_boxes, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     void inputFeature(double t, const vector<cv::Point2f>& _features0, const vector<cv::Point2f>& _features1=vector<cv::Point2f>());//仿真的feature
     void inputGroundtruth(double t, Eigen::Matrix<double, 7, 1>& data);
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
