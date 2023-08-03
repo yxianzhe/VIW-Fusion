@@ -1210,10 +1210,10 @@ void Estimator::vector2double()
     para_Ix_sw_wheel[0][0] = sw;
 
     Quaterniond q2{rpw};
-    para_plane_R[0][0] = q.x();
-    para_plane_R[0][1] = q.y();
-    para_plane_R[0][2] = q.z();
-    para_plane_R[0][3] = q.w();
+    para_plane_R[0][0] = q2.x();
+    para_plane_R[0][1] = q2.y();
+    para_plane_R[0][2] = q2.z();
+    para_plane_R[0][3] = q2.w();
     para_plane_Z[0][0] = zpw;
 
     VectorXd dep = f_manager.getDepthVector();
