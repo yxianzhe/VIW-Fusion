@@ -5,7 +5,7 @@
 imu: 1
 wheel: 1
 only_initial_with_wheel: 0 #只利用wheel进行初始化，不加入因子图
-plane: 1
+plane: 0
 num_of_cam: 1
 
 imu_topic: "/d400/imu0"
@@ -20,7 +20,7 @@ image_width: 848
 image_height: 480
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
 # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
 #If you choose 0 or 1, you should write down the following matrix.
@@ -50,7 +50,7 @@ body_T_cam1: !!opencv-matrix
            0,           0,           0,           1 ]
 
 # Extrinsic parameter between IMU and Wheel.
-estimate_wheel_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_wheel_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
 # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
 #If you choose 0 or 1, you should write down the following matrix.
@@ -66,11 +66,14 @@ body_T_wheel: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.05336189, -0.99853166,  0.00932149, -0.02357986,
-         -0.14115155, -0.01678360, -0.98984573,  1.24802042,
-          0.98854881,  0.05150430, -0.14183996, -0.21397353,
+  data: [ 0.05336189, -0.99853166,  0.00932149, -0.02357982637770463,
+         -0.14115155, -0.01678360, -0.98984573,  1.2480204121660317,
+          0.98854881,  0.05150430, -0.14183996, -0.21397355437148347,
           0,           0,           0,           1]
-
+#  data: [ 0.05336190, -0.14115160,  0.98854880,  0.38894162,
+#         -0.99853180, -0.01678360,  0.05150430,  0.00842159,
+#          0.00932150, -0.98984570, -0.14183990,  1.20521747,
+#          0,           0,           0,           1]
 
 #plane noise
 #mono:0.01 stereo:0.005
