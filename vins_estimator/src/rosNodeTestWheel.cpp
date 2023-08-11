@@ -158,8 +158,28 @@ void sync_process()
                 }
             }
             m_buf.unlock();
+            vector<vector<int>> bounding_boxes;
+            double boxes_time = 0.;
+            while(1)
+            {
+                lock_guard<mutex> m_buf_guard(m_buf);
+                if(img0_buf.size()>3)
+                    break;
+                if(!box_buf.empty())
+                {
+                    boxes_time = box_buf.front()->image_header.stamp.toSec();
+                    if(boxes_time - time > -0.003 && boxes_time - time < 0.003){
+                        bounding_boxes = getBoxesFromMsg(box_buf.front());
+                        box_buf.pop();
+                    }else if(boxes_time < time){
+                        while(!box_buf.empty() && box_buf.front()->image_header.stamp.toSec() < time)
+                            box_buf.pop();
+                    }
+                    break;
+                }
+            }
             if(!image0.empty())
-                estimator.inputImage(time, image0, image1);
+                estimator.inputImage(time, bounding_boxes, image0, image1);
         }
         else
         {
@@ -179,30 +199,21 @@ void sync_process()
             double boxes_time = 0.;
             while(1)
             {
-                m_buf.lock();
-                if(img0_buf.size()>3){
-                    m_buf.unlock();
+                lock_guard<mutex> m_buf_guard(m_buf);
+                if(img0_buf.size()>3)
                     break;
-                }
                 if(!box_buf.empty())
                 {
                     boxes_time = box_buf.front()->image_header.stamp.toSec();
                     if(boxes_time - time > -0.003 && boxes_time - time < 0.003){
                         bounding_boxes = getBoxesFromMsg(box_buf.front());
                         box_buf.pop();
-                        m_buf.unlock();
-                        break;
                     }else if(boxes_time < time){
                         while(!box_buf.empty() && box_buf.front()->image_header.stamp.toSec() < time)
                             box_buf.pop();
-                        m_buf.unlock();
-                        break;
-                    }else{
-                        m_buf.unlock();
-                        break;
                     }
+                    break;
                 }
-                m_buf.unlock();
             }
             if(!image.empty())
                 estimator.inputImage(time, bounding_boxes, image);

@@ -38,8 +38,10 @@ class FeatureTracker
 public:
     FeatureTracker();
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const vector<vector<int>> &_boxes, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackFeature(double _cur_time, const vector<cv::Point2f>& _features0, const vector<cv::Point2f>& _features1 = vector<cv::Point2f>());
     void setMask();
+    void setMask(const vector<vector<int>> &_boxes);
     void readIntrinsicParameter(const vector<string> &calib_file);
     void showUndistortion(const string &name);
     void rejectWithF();
@@ -59,6 +61,7 @@ public:
     void removeOutliers(set<int> &removePtsIds);
     cv::Mat getTrackImage();
     bool inBorder(const cv::Point2f &pt);
+    bool inBox(const cv::Point2f &pt, const vector<vector<int>> &_boxes);
 
     int row, col;
     cv::Mat imTrack;

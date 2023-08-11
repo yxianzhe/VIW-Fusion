@@ -249,6 +249,27 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     
 }
 
+void Estimator::predictPtsFromFusion(double t)
+{
+    // 获取这段时间内的imu odom数据，准备喂给eskf
+    vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
+    vector<pair<double, Eigen::Vector3d>> velWheelVector, gyrWheelVector;
+    double timu1 = t + td;
+    double twheel1 = timu1 - td_wheel; 
+    while(!IMUAvailable(timu1) || !WheelAvailable(twheel1))
+    {
+        std::chrono::milliseconds dura(5);
+        std::this_thread::sleep_for(dura);
+    }
+    mBuf.lock();
+    getIMUInterval(prevTime, timu1, accVector, gyrVector);
+    mBuf.unlock();
+    mWheelBuf.lock();
+    getWheelInterval(prevTime_wheel, twheel1, velWheelVector, gyrWheelVector);
+    mWheelBuf.unlock();
+
+}
+
 void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv::Mat &_img, const cv::Mat &_img1)
 {
     if(!_boxes.empty())
@@ -259,11 +280,22 @@ void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     TicToc featureTrackerTime;
 
-    if(_img1.empty())
-        featureFrame = featureTracker.trackImage(t, _img);
-    else
-        featureFrame = featureTracker.trackImage(t, _img, _img1);
-    //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+    if(solver_flag == SolverFlag::INITIAL){
+        // 初始化部分假设都是静态的场景
+        if(_img1.empty())
+            featureFrame = featureTracker.trackImage(t, _img);
+        else
+            featureFrame = featureTracker.trackImage(t, _img, _img1);
+        //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+    }else if(solver_flag == SolverFlag::NON_LINEAR){
+        if(USE_IMU && USE_WHEEL)
+            // predictPtsFromFusion(t);
+        if(_img1.empty())
+            featureFrame = featureTracker.trackImage(t, _boxes, _img);
+        else
+            featureFrame = featureTracker.trackImage(t, _boxes, _img, _img1);
+        //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+    }
 
     if (SHOW_TRACK)
     {
@@ -2254,7 +2286,7 @@ void Estimator::fastPredictWheel(double t, Eigen::Vector3d linear_velocity, Eige
 {
     double dt = t - latest_time_wheel;
     latest_time_wheel = t;
-    Eigen::Vector3d un_gyr = 0.5 * latest_sw * (latest_gyr_0 + angular_velocity);
+    Eigen::Vector3d un_gyr = 0.5 * latest_sw * (latest_gyr_wheel_0 + angular_velocity);
     Eigen::Vector3d un_vel_0 = latest_Q_wheel * latest_vel_wheel_0;
     Eigen::Matrix3d latest_sv = Eigen::Vector3d(latest_sx, latest_sy, 1).asDiagonal();
     //在初始化完成后会进行updateLatestState，对这些latest量进行更新
