@@ -57,6 +57,7 @@ add_library(vins_lib
         src/estimator/parameters.cpp
         src/estimator/estimator.cpp
         src/estimator/feature_manager.cpp
+        src/estimator/eskf.cpp
         src/factor/pose_local_parameterization.cpp
         src/factor/pose_subset_parameterization.cpp
         src/factor/orientation_local_parameterization.cpp

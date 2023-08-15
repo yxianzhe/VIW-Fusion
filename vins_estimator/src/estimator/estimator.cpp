@@ -251,6 +251,9 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
 
 void Estimator::predictPtsFromFusion(double t)
 {
+    e_estimator.reset(new eskfEstimator());
+    e_estimator->Init(rio, tio, g, Rs[WINDOW_SIZE], Ps[WINDOW_SIZE], Headers[WINDOW_SIZE], 
+                      Vs[WINDOW_SIZE], Bas[WINDOW_SIZE], Bgs[WINDOW_SIZE]);
     // 获取这段时间内的imu odom数据，准备喂给eskf
     vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
     vector<pair<double, Eigen::Vector3d>> velWheelVector, gyrWheelVector;
@@ -261,12 +264,72 @@ void Estimator::predictPtsFromFusion(double t)
         std::chrono::milliseconds dura(5);
         std::this_thread::sleep_for(dura);
     }
-    mBuf.lock();
-    getIMUInterval(prevTime, timu1, accVector, gyrVector);
-    mBuf.unlock();
-    mWheelBuf.lock();
-    getWheelInterval(prevTime_wheel, twheel1, velWheelVector, gyrWheelVector);
-    mWheelBuf.unlock();
+    getIMUIntervalTmp(prevTime, timu1, accVector, gyrVector);
+    getWheelIntervalTmp(prevTime_wheel, twheel1, velWheelVector, gyrWheelVector);
+
+    int pimu = 0, pwheel = 0;
+    int nimu = accVector.size(), nwheel = velWheelVector.size();
+    // 先把时间统一到camera
+    for(int i=0; i<nimu; i++) {
+        accVector[i].first -= td;
+        gyrVector[i].first -= td;
+    }
+    for(int i=0; i<nwheel; i++) {
+        velWheelVector[i].first -= td - td_wheel;
+        gyrWheelVector[i].first -= td - td_wheel;
+    }
+    // 按时间顺序依次喂数据
+    while(pimu<nimu && pwheel<nwheel) {
+        if(accVector[pimu].first <= velWheelVector[pwheel].first){
+            e_estimator->InsertImu(accVector[pimu], gyrVector[pimu]);
+            pimu++;
+            continue;
+        }else{
+            e_estimator->InsertWheel(velWheelVector[pwheel]);
+            pwheel++;
+            continue;
+        }
+    }
+    while(pimu<nimu) {
+        e_estimator->InsertImu(accVector[pimu], gyrVector[pimu]);
+        pimu++;
+    }
+    while(pwheel<nwheel) {
+        e_estimator->InsertWheel(velWheelVector[pwheel]);
+        pwheel++;
+    }
+
+    double predict_time;
+    Eigen::Matrix3d next_R;
+    Eigen::Vector3d next_t;
+    e_estimator->GetResult(predict_time, next_R, next_t);
+
+    ROS_WARN_STREAM("fuse time: " << fixed << setprecision(9) << predict_time << " R: " << next_R << " t: " << next_t);
+    ROS_WARN_STREAM("imu time: " << fixed << setprecision(9) << latest_time << " R: " << latest_Q.toRotationMatrix() << " t: " << latest_P);
+    ROS_WARN_STREAM("wheel time: " << fixed << setprecision(9) << latest_time_wheel << " R: " << latest_Q_wheel.toRotationMatrix() * rio.transpose()
+                     << " t: " << -latest_Q_wheel.toRotationMatrix() * rio.transpose() * tio + latest_P_wheel);
+
+    map<int, Eigen::Vector3d> predictPts;
+    for (auto &it_per_id : f_manager.feature)
+    {
+        if(it_per_id.estimated_depth > 0)
+        {
+            int firstIndex = it_per_id.start_frame;
+            int lastIndex = it_per_id.start_frame + it_per_id.feature_per_frame.size() - 1;
+            //printf("cur frame index  %d last frame index %d\n", frame_count, lastIndex);
+            if((int)it_per_id.feature_per_frame.size() >= 2 && lastIndex == frame_count - 1)
+            {
+                double depth = it_per_id.estimated_depth;
+                Vector3d pts_j = ric[0] * (depth * it_per_id.feature_per_frame[0].point) + tic[0];
+                Vector3d pts_w = Rs[firstIndex] * pts_j + Ps[firstIndex];
+                Vector3d pts_local = next_R.transpose() * (pts_w - next_t);
+                Vector3d pts_cam = ric[0].transpose() * (pts_local - tic[0]);
+                int ptsIndex = it_per_id.feature_id;
+                predictPts[ptsIndex] = pts_cam;
+            }
+        }
+    }
+    featureTracker.setPrediction(predictPts);
 
 }
 
@@ -289,7 +352,7 @@ void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv
         //printf("featureTracker time: %f\n", featureTrackerTime.toc());
     }else if(solver_flag == SolverFlag::NON_LINEAR){
         if(USE_IMU && USE_WHEEL)
-            // predictPtsFromFusion(t);
+            predictPtsFromFusion(t);
         if(_img1.empty())
             featureFrame = featureTracker.trackImage(t, _boxes, _img);
         else
@@ -488,6 +551,85 @@ bool Estimator::getWheelInterval(double t0, double t1, vector<pair<double, Eigen
         }
         velVector.push_back(wheelVelBuf.front());
         gyrVector.push_back(wheelGyrBuf.front());
+    }
+    else
+    {
+        printf("wait for wheel\n");
+        return false;
+    }
+//    ROS_INFO("velVector.size: %d", static_cast<int>(velVector.size()));
+    return true;
+}
+
+bool Estimator::getIMUIntervalTmp(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
+                                vector<pair<double, Eigen::Vector3d>> &gyrVector)
+{
+    mBuf.lock();
+    auto tmp_accBuf = accBuf;
+    auto tmp_gyrBuf = gyrBuf;
+    mBuf.unlock();
+    if(tmp_accBuf.empty())
+    {
+        printf("not receive imu\n");
+        return false;
+    }
+    //printf("get imu from %f %f\n", t0, t1);
+    //printf("imu front time %f   imu end time %f\n", tmp_accBuf.front().first, tmp_accBuf.back().first);
+    if(t1 <= tmp_accBuf.back().first)
+    {
+        while (tmp_accBuf.front().first <= t0)
+        {
+            tmp_accBuf.pop();
+            tmp_gyrBuf.pop();
+        }
+        while (tmp_accBuf.front().first < t1)
+        {
+            accVector.push_back(tmp_accBuf.front());
+            tmp_accBuf.pop();
+            gyrVector.push_back(tmp_gyrBuf.front());
+            tmp_gyrBuf.pop();
+        }
+        accVector.push_back(tmp_accBuf.front());
+        gyrVector.push_back(tmp_gyrBuf.front());
+    }
+    else
+    {
+        printf("wait for imu\n");
+        return false;
+    }
+    return true;
+}
+
+bool Estimator::getWheelIntervalTmp(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &velVector,
+                               vector<pair<double, Eigen::Vector3d>> &gyrVector)
+{
+    mWheelBuf.lock();
+    auto tmp_wheelVelBuf = wheelVelBuf;
+    auto tmp_wheelGyrBuf = wheelGyrBuf;
+    mWheelBuf.unlock();
+    if(tmp_wheelVelBuf.empty())
+    {
+        printf("not receive wheel\n");
+        return false;
+    }
+    //printf("get imu from %f %f\n", t0, t1);
+    //printf("imu front time %f   imu end time %f\n", tmp_wheelVelBuf.front().first, tmp_wheelVelBuf.back().first);
+    if(t1 <= tmp_wheelVelBuf.back().first)
+    {
+        while (tmp_wheelVelBuf.front().first <= t0)
+        {
+            tmp_wheelVelBuf.pop();
+            tmp_wheelGyrBuf.pop();
+        }
+        while (tmp_wheelVelBuf.front().first < t1)
+        {
+            velVector.push_back(tmp_wheelVelBuf.front());
+            tmp_wheelVelBuf.pop();
+            gyrVector.push_back(tmp_wheelGyrBuf.front());
+            tmp_wheelGyrBuf.pop();
+        }
+        velVector.push_back(tmp_wheelVelBuf.front());
+        gyrVector.push_back(tmp_wheelGyrBuf.front());
     }
     else
     {
@@ -921,8 +1063,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //            ROS_INFO("removeIndex size: %d", removeIndex.size());
             if(FEATURE0_TOPIC.empty())
                 featureTracker.removeOutliers(removeIndex); //若路标点为外点，则对前端图像跟踪部分的信息进行剔除更新;主要包括prev_pts, ids， track_cnt
-            predictPtsInNextFrame(); //预测路标点在下一时刻左图中的坐标，基于恒速模型
+            // predictPtsInNextFrame(); //预测路标点在下一时刻左图中的坐标，基于恒速模型
         }
+        // predictPtsInNextFrame(); //预测路标点在下一时刻左图中的坐标，基于恒速模型
             
         ROS_DEBUG("solver costs: %fms", t_solve.toc());
 

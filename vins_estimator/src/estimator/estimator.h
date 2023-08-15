@@ -22,6 +22,7 @@
 
 #include "parameters.h"
 #include "feature_manager.h"
+#include "eskf.h"
 #include "../utility/utility.h"
 #include "../utility/tic_toc.h"
 #include "../initial/solve_5pts.h"
@@ -79,6 +80,10 @@ class Estimator
     bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
                                               vector<pair<double, Eigen::Vector3d>> &gyrVector);
     bool getWheelInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &velVector,
+                                     vector<pair<double, Eigen::Vector3d>> &gyrVector);
+    bool getIMUIntervalTmp(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
+                                              vector<pair<double, Eigen::Vector3d>> &gyrVector);
+    bool getWheelIntervalTmp(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &velVector,
                                      vector<pair<double, Eigen::Vector3d>> &gyrVector);
     void getPoseInWorldFrame(Eigen::Matrix4d &T);
     void getPoseInWorldFrame(int index, Eigen::Matrix4d &T);
@@ -177,6 +182,7 @@ class Estimator
     int inputImageCnt;
 
     FeatureManager f_manager;
+    std::shared_ptr<eskfEstimator> e_estimator;
     MotionEstimator m_estimator;
     InitialEXRotation initial_ex_rotation;
 

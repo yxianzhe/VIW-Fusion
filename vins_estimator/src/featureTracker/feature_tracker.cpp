@@ -402,6 +402,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         vector<float> err;
         if(hasPrediction)
         {
+            static int success_count = 0;
             cur_pts = predict_pts;
             cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1,
                     //迭代算法的终止条件
@@ -413,8 +414,14 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
                 if (status[i])
                     succ_num++;
             }
-            if (succ_num < 10)
-               cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+            if (succ_num < 10) {
+                cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+                ROS_WARN("prediction flow failed");
+            }
+            else {
+                success_count++;
+                ROS_WARN("optical flow with prediction succeed !!! count %d", success_count);
+            }
         }
         else
             cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
