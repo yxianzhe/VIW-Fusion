@@ -31,8 +31,8 @@ We align the trajectory with the entrance door and exit door to further compare 
 
 ## 1. Prerequisites
 ### 1.1 **Ubuntu** and **ROS**
-Ubuntu 64-bit 16.04 or 18.04.
-ROS Kinetic or Melodic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
+Ubuntu 64-bit 22.04.
+ROS Humble. [ROS Installation](http://wiki.ros.org/ROS/Installation)
 
 
 ### 1.2. **Ceres Solver**
@@ -51,13 +51,14 @@ sudo make install
 ```
 
 ## 2. Build VIW-Fusion
-Clone the repository and catkin_make:
+Clone the repository and colcon build:
 ```asm
 cd ~/catkin_ws/src
 git clone https://github.com/TouchDeeper/VIW-Fusion.git
+git checkout ros2_humble
 cd ../
-catkin_make
-source ~/catkin_ws/devel/setup.bash
+colcon build
+source ~/catkin_ws/install/setup.bash
 ```
 (if you fail in this step, try to find another computer with clean system or reinstall Ubuntu and ROS)
 
@@ -65,9 +66,9 @@ source ~/catkin_ws/devel/setup.bash
 
 Download dataset [here](https://drive.google.com/drive/folders/1m2msbo3DRGhtINtDE47v-1blyJc0RK0E?usp=sharing).
 ```asm
-roslaunch vins vins_rviz.launch
-rosrun vins viwo_node ~/catkin_ws/src/VIW-Fusion/config/realsense_d435i/realsense_stereo_imu_config_ridgeback.yaml 
-(optional) rosrun loop_fusion loop_fusion_node ~/catkin_ws/src/VIW-Fusion/config/realsense_d435i/realsense_stereo_imu_config_ridgeback.yaml
+ros2 launch vins vins_rviz.launch
+ros2 run vins viwo_node ~/catkin_ws/src/VIW-Fusion/config/realsense_d435i/realsense_stereo_imu_config_ridgeback.yaml 
+(optional) ros2 run loop_fusion loop_fusion_node ~/catkin_ws/src/VIW-Fusion/config/realsense_d435i/realsense_stereo_imu_config_ridgeback.yaml
 rosbag play YOUR_DATASET_FOLDER/ridgeback_dark.bag
 ```
 
