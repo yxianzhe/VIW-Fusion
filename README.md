@@ -31,8 +31,8 @@ We align the trajectory with the entrance door and exit door to further compare 
 
 ## 1. Prerequisites
 ### 1.1 **Ubuntu** and **ROS**
-Ubuntu 64-bit 16.04 or 18.04.
-ROS Kinetic or Melodic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
+Ubuntu 64-bit 20.04.
+ROS Noetic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
 
 
 ### 1.2. **Ceres Solver**
@@ -55,6 +55,7 @@ Clone the repository and catkin_make:
 ```asm
 cd ~/catkin_ws/src
 git clone https://github.com/TouchDeeper/VIW-Fusion.git
+git checkout ros_noetic
 cd ../
 catkin_make
 source ~/catkin_ws/devel/setup.bash
