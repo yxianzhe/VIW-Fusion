@@ -64,6 +64,7 @@ extern std::string PROCESS_TIME_PATH;
 extern std::string TD_WHEEL_PATH;
 extern std::string TD_PATH;
 extern std::string VINS_RESULT_PATH;
+extern std::string GPS_RESULT_PATH;
 extern std::string GROUNDTRUTH_PATH;
 extern std::string OUTPUT_FOLDER;
 extern std::string IMU_TOPIC;

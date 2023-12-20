@@ -5,18 +5,18 @@
 imu: 1
 wheel: 1
 only_initial_with_wheel: 0 #只利用wheel进行初始化，不加入因子图
-plane: 0
+plane: 1
 num_of_cam: 1
 
-imu_topic: "/d400/imu0"
+imu_topic: "/camera/imu"
 wheel_topic: "/odom"   #"/ridgeback_velocity_controller/odom"， “/odometry/filtered”
-image0_topic: "/d400/color/image_raw"
-image1_topic: "/d400/color/image_raw"
+image0_topic: "/camera/color/image_raw"
+image1_topic: "/camera/color/image_raw"
 output_path: "/root/slam/VIW-Fusion-ws/src/VIW-Fusion/output"
 
-cam0_calib: "d400_cam.yaml"
-cam1_calib: "d400_cam.yaml"
-image_width: 848
+cam0_calib: "d435_left.yaml"
+cam1_calib: "d435_left.yaml"
+image_width: 640
 image_height: 480
 
 # Extrinsic parameter between IMU and Camera.
@@ -39,19 +39,19 @@ body_T_cam0: !!opencv-matrix
 #           -0.003828680351062, 0.999986658473099, -0.003501944262433, -0.00510325236246,
 #           -0.005868115609379, 0.003479442469180, 0.999976848846595,  -0.0112013882026,
 #           0,                  0,                 0,                  1 ]
-   data: [  0.99997533, -0.00382868, -0.00586811, -0.02039756,   
-            0.00384914,  0.99998642,  0.00347944,  0.00506397,   
-            0.00585471, -0.00350194,  0.99997661,  0.01106433,   
-            0.00000000,  0.00000000,  0.00000000,  1.00000000 ]
+   data: [ 0.999914,         0.0125876,       -0.00361242,  0.07494282,
+           -0.0125923,        0.99992,         -0.00126393, -0.01077138,
+           0.00359622,       0.00130931,       0.999993, -0.00641822,
+           0.,         0. ,        0.,         1.        ]
 
 body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [  0.99997533, -0.00382868, -0.00586811, -0.02039756,   
-            0.00384914,  0.99998642,  0.00347944,  0.00506397,   
-            0.00585471, -0.00350194,  0.99997661,  0.01106433,   
-            0.00000000,  0.00000000,  0.00000000,  1.00000000 ]
+   data: [ 0.999914,         0.0125876,       -0.00361242,  0.07494282,
+           -0.0125923,        0.99992,         -0.00126393, -0.01077138,
+           0.00359622,       0.00130931,       0.999993, -0.00641822,
+           0.,         0. ,        0.,         1.        ]
 
 # Extrinsic parameter between IMU and Wheel.
 estimate_wheel_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
@@ -75,7 +75,7 @@ body_T_wheel: !!opencv-matrix
 #         -0.0153303, -0.9997960,  0.0131532, 0.9206998887739904,
 #          0,          0,          0,         1]
   data: [ 0.00715604, -0.99985685, -0.01533027, -0.061159013133332565,   
-          0.01304470,  0.01542273, -0.99979593,  0.9193038816796133,   
+          0.01304470,  0.01542273, -0.99979593,  0.5193038816796133,   
           0.99988931,  0.00695456,  0.01315320, -0.22445689655448112,   
           0.00000000,  0.00000000,  0.00000000,  1.00000000 ] 
 
@@ -124,7 +124,7 @@ estimate_wheel_intrinsic: 0
 # wheel intrinsic
 sx: 1.0
 sy: 1.0
-sw: 1.0
+sw: -2.5
 
 
 #unsynchronization parameters

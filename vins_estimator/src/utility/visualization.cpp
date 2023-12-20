@@ -310,7 +310,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
         // write result to file
         ofstream foutC(VINS_RESULT_PATH, ios::app);
         foutC.setf(ios::fixed, ios::floatfield);
-        foutC << std::setprecision(0)
+        foutC << std::setprecision(9)
               << header.stamp.toSec() << " "
               << std::setprecision(9)
               << pose_stamped.pose.position.x << " "
@@ -378,7 +378,7 @@ void pubGroundTruth(Estimator &estimator, const std_msgs::Header &header, Eigen:
         // write result to file
         ofstream foutC(GROUNDTRUTH_PATH, ios::app);
         foutC.setf(ios::fixed, ios::floatfield);
-        foutC << std::setprecision(0)
+        foutC << std::setprecision(9)
         << header.stamp.toSec()*1e9<< " "
         << std::setprecision(9)
         << pose_stamped.pose.position.x << " "

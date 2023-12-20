@@ -5,18 +5,18 @@
 imu: 1
 num_of_cam: 1
 
-imu_topic: "/d400/imu0"
-image0_topic: "/d400/color/image_raw"
-image1_topic: "/d400/color/image_raw"
+imu_topic: "/camera/imu"
+image0_topic: "/camera/color/image_raw"
+image1_topic: "/camera/color/image_raw"
 output_path: "/root/slam/VIW-Fusion-ws/src/VIW-Fusion/output"
 
-cam0_calib: "d400_cam.yaml"
-cam1_calib: "d400_cam.yaml"
-image_width: 848
+cam0_calib: "d435_left.yaml"
+cam1_calib: "d435_left.yaml"
+image_width: 640
 image_height: 480
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
 # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
 # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
 #If you choose 0 or 1, you should write down the following matrix.
@@ -25,14 +25,11 @@ body_T_cam0: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [ 0.999975572679493,  0.003849141066713, 0.005854714944742,  0.0203127935529,
-           -0.003828680351062, 0.999986658473099, -0.003501944262433, -0.00510325236246,
-           -0.005868115609379, 0.003479442469180, 0.999976848846595,  -0.0112013882026,
-           0,                  0,                 0,                  1 ]
-#   data: [ 0.99997547,   	-0.00382861,   	-0.00586816,   	-0.02039761,
-#           0.00384919,   	0.99998655,   	0.00347944,   	0.00506392,
-#           0.00585470,   	-0.00350199,   	0.99997665,   	0.01106436,
-#           0,                  0,                 0,                  1 ]
+   data: [ 0.999914,         0.0125876,       -0.00361242,  0.07494282,
+           -0.0125923,        0.99992,         -0.00126393, -0.01077138,
+           0.00359622,       0.00130931,       0.999993, -0.00641822,
+           0.,         0. ,        0.,         1.        ]
+
 
 #Multiple thread support
 multiple_thread: 1

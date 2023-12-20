@@ -44,6 +44,7 @@ int ROLLING_SHUTTER;
 std::string EX_CALIB_RESULT_PATH;
 std::string IN_CALIB_RESULT_PATH;
 std::string VINS_RESULT_PATH;
+std::string GPS_RESULT_PATH;
 std::string INTRINSIC_ITERATE_PATH;
 std::string EXTRINSIC_WHEEL_ITERATE_PATH;
 std::string EXTRINSIC_CAM_ITERATE_PATH;
@@ -269,11 +270,14 @@ void readParameters(std::string config_file)
 
 
     VINS_RESULT_PATH = OUTPUT_FOLDER + "/vio.csv";
+    GPS_RESULT_PATH = OUTPUT_FOLDER + "/gps.csv";
     GROUNDTRUTH_PATH = OUTPUT_FOLDER + "/groundtruth.csv";
     std::cout << "result path " << VINS_RESULT_PATH << std::endl;
     std::cout << "groundtruth path " << GROUNDTRUTH_PATH << std::endl;
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
+    std::ofstream fout_gps(GPS_RESULT_PATH, std::ios::out);
+    fout_gps.close();
     std::ofstream fout2(GROUNDTRUTH_PATH, std::ios::out);
     fout2.close();
 

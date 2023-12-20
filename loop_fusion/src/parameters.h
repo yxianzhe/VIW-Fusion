@@ -32,6 +32,7 @@ extern std::string POSE_GRAPH_SAVE_PATH;
 extern int ROW;
 extern int COL;
 extern std::string VINS_RESULT_PATH;
+extern std::string GPS_RESULT_PATH;
 extern int DEBUG_IMAGE;
 
 

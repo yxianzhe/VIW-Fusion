@@ -259,7 +259,7 @@ void Estimator::predictPtsFromFusion(double t)
     vector<pair<double, Eigen::Vector3d>> velWheelVector, gyrWheelVector;
     double timu1 = t + td;
     double twheel1 = timu1 - td_wheel; 
-    while(!IMUAvailable(timu1) || !WheelAvailable(twheel1))
+    while(!IMUAvailable(timu1))
     {
         std::chrono::milliseconds dura(5);
         std::this_thread::sleep_for(dura);
@@ -304,10 +304,10 @@ void Estimator::predictPtsFromFusion(double t)
     Eigen::Vector3d next_t;
     e_estimator->GetResult(predict_time, next_R, next_t);
 
-    ROS_WARN_STREAM("fuse time: " << fixed << setprecision(9) << predict_time << " R: " << next_R << " t: " << next_t);
-    ROS_WARN_STREAM("imu time: " << fixed << setprecision(9) << latest_time << " R: " << latest_Q.toRotationMatrix() << " t: " << latest_P);
-    ROS_WARN_STREAM("wheel time: " << fixed << setprecision(9) << latest_time_wheel << " R: " << latest_Q_wheel.toRotationMatrix() * rio.transpose()
-                     << " t: " << -latest_Q_wheel.toRotationMatrix() * rio.transpose() * tio + latest_P_wheel);
+    // ROS_WARN_STREAM("fuse time: " << fixed << setprecision(9) << predict_time << " R: " << next_R << " t: " << next_t);
+    // ROS_WARN_STREAM("imu time: " << fixed << setprecision(9) << latest_time << " R: " << latest_Q.toRotationMatrix() << " t: " << latest_P);
+    // ROS_WARN_STREAM("wheel time: " << fixed << setprecision(9) << latest_time_wheel << " R: " << latest_Q_wheel.toRotationMatrix() * rio.transpose()
+    //                  << " t: " << -latest_Q_wheel.toRotationMatrix() * rio.transpose() * tio + latest_P_wheel);
 
     map<int, Eigen::Vector3d> predictPts;
     for (auto &it_per_id : f_manager.feature)
@@ -351,7 +351,7 @@ void Estimator::inputImage(double t, const vector<vector<int>> &_boxes, const cv
             featureFrame = featureTracker.trackImage(t, _img, _img1);
         //printf("featureTracker time: %f\n", featureTrackerTime.toc());
     }else if(solver_flag == SolverFlag::NON_LINEAR){
-        if(USE_IMU && USE_WHEEL)
+        if(USE_IMU)
             predictPtsFromFusion(t);
         if(_img1.empty())
             featureFrame = featureTracker.trackImage(t, _boxes, _img);

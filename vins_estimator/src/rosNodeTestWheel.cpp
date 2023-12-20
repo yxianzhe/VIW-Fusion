@@ -21,8 +21,11 @@
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
 #include "darknet_ros_msgs/BoundingBoxes.h"
+#include <sensor_msgs/NavSatFix.h>
+#include "tool/gps_adapter.h"
 
 Estimator estimator;
+CoordConverter gps_adapter;
 
 queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
@@ -314,6 +317,31 @@ void cam_switch_callback(const std_msgs::BoolConstPtr &switch_msg)
     return;
 }
 
+void gps_callback(const sensor_msgs::NavSatFix::ConstPtr& gps_msg)
+{
+    Eigen::Vector3d llh_point;
+    llh_point.x() = gps_msg->longitude;
+    llh_point.y() = gps_msg->latitude;
+    llh_point.z() = gps_msg->altitude;
+    if(!gps_adapter.is_init_){
+        gps_adapter.SetReferencePoint(llh_point, Eigen::Vector3d::Zero());
+    }
+    Eigen::Vector3d enu_point;
+    gps_adapter.ConvertToENU(llh_point, enu_point);
+    ofstream foutC(GPS_RESULT_PATH, ios::app);
+    foutC.setf(ios::fixed, ios::floatfield);
+    foutC << std::setprecision(9)
+            << gps_msg->header.stamp.toSec() << " "
+            << std::setprecision(9)
+            << enu_point.x() << " "
+            << enu_point.y() << " "
+            << enu_point.z() << " "
+            << 0. << " "
+            << 0. << " "
+            << 0. << " "
+            << 1. << std::endl;
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "vins_estimator");
@@ -351,6 +379,8 @@ int main(int argc, char **argv)
     ros::Subscriber sub_restart = n.subscribe("/vins_restart", 100, restart_callback);
     ros::Subscriber sub_imu_switch = n.subscribe("/vins_imu_switch", 100, imu_switch_callback);
     ros::Subscriber sub_cam_switch = n.subscribe("/vins_cam_switch", 100, cam_switch_callback);
+
+    ros::Subscriber sub_fix = n.subscribe("/fix", 100, gps_callback);
 
     std::thread sync_thread{sync_process};
     ros::spin();
